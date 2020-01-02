@@ -85,7 +85,7 @@ def createTable(dbFile, tableName, primaryKey, *cols):
 
     stmt = "create table if not exists \"" + tableName + "\" (%s)" % ",".join(cols)
     stmt = stmt[:-1]
-    stmt = stmt + ', CONSTRAINT glRefPK PRIMARY KEY (' +primaryKey +'))'
+    stmt = stmt + ', CONSTRAINT compoundPK PRIMARY KEY (' +primaryKey +'))'
     with open("createTable.txt","w") as txtFile:
         txtFile.write(stmt)
         txtFile.close()
@@ -100,7 +100,7 @@ def createTable(dbFile, tableName, primaryKey, *cols):
     '''
 
 
-def dataAdder(caller,dbFile, table, pKeyName,pKey, **other):
+def dataAdder(caller,dbFile, table, **other):
     # print('~112',caller, dbFile, table, pKeyName, pKey, other)
     con = sqlite3.connect(dbFile)
     cur = con.cursor()
@@ -120,7 +120,7 @@ def dataAdder(caller,dbFile, table, pKeyName,pKey, **other):
     itemString = str(cur.fetchone())
     if itemString.upper() == 'NONE':
     '''
-    stmt = 'INSERT INTO ' +table+'(' + pKeyName + keyStr +')\nVALUES (\''+ pKey + '\', ' +valueStr + ')'
+    stmt = 'INSERT INTO ' +table+'\nVALUES ('+ valueStr + ')'
     '''
     else:
         subStmt = ""
@@ -154,3 +154,8 @@ def output(dbFile, table, fileName):
         for row in rows:
             outWriter.writerow(row)
         outCSV.close()
+        
+def fix_apostrophe(value):
+    if "'" in value:                   
+        value = value.replace("'","''")
+    return(value)

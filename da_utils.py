@@ -1,3 +1,4 @@
+import re
 
 def fix_apostrophe(value):
     if "'" in value:
@@ -21,14 +22,6 @@ def createTable(db, tableName, index, *cols):
     db.commit()
 
 
-def valType(inPut):
-    if str(type(inPut)) == "<class 'int'>":
-        rtnVal = str(inPut)
-    else:
-        rtnVal = "'" + inPut + "'"
-    return rtnVal
-
-
 def dataAdder(db,caller, table, keyVal, **other):
     '''
     pKeyList = list(pKey.keys())
@@ -46,29 +39,57 @@ def dataAdder(db,caller, table, keyVal, **other):
     '''
 
     otherKeyList = list(other.keys())
+    print('da_utils ~40 otherValueList = ',otherKeyList)
     otherValueList = list(other.values())
-    keyValueList = " (" + str(otherKeyList)[1:-1].replace("'","") + ") VALUES ("+ str(otherValueList)[1:-1] + ")"
+    print('da_utils ~42 otherValueList = ',otherValueList)
+    insertList = " (" + str(otherKeyList)[1:-1].replace("'","") + ") VALUES ("+ str(otherValueList)[1:-1] + ")"
+    print('da_utils ~44 insertList = ',insertList)
     n = 0
     updateList = ''
     while n < len(otherKeyList):
-        updateList = updateList + otherKeyList[n] + ' = ' + valType(otherValueList[n]) +", "
+        unknown = str((otherValueList[n]))
+        p = re.compile('\d{4')
+        m = p.match(unknown)
+        print('da_utils ~51 p=',m)
+        if m:
+            unknown = m.group()
+        else:
+            unknown = "'" + unknown + "'"
+        print('da_utils ~46 unkown =', unknown)
+        updateList = updateList + otherKeyList[n] + ' = ' + unknown +", "
         n+= 1
     updateList = updateList[:-2]
-    print('~55 ', updateList)
+    print('da_utils ~55 updateList =', updateList)
     stmt = "SELECT * from " + table +' where ' + keyVal
     c = db.cursor()
     c.execute(stmt)
     itemString = str(c.fetchone())
     if itemString.upper() == 'NONE':
-        stmt = 'INSERT INTO ' + table + keyValueList
+        stmt = 'INSERT INTO ' + table + insertList
+        print('da_utils ~59 da_utils',stmt)
         try:
             db.query(stmt)
             db.commit()
         except Exception as e:
-            print(e)
+            print('da_utils  ~62',e)
         pass
     else:
         stmt = 'UPDATE ' + table + '\nSET '+ updateList +'\n WHERE ' + keyVal
-        print('~64 da_utils',stmt)
+        print('~66 da_utils',stmt)
         db.query(stmt)
         db.commit()
+
+def makeSrch(keyColumns, keyValues):
+    n = 0
+    rtnStr =''
+    while n < len(keyColumns):
+        if n > 0:
+            rtnStr = rtnStr[:-1] + " and "
+        if str(type(keyValues[n])) == "<class 'int'>":
+            keyValue = str(keyValues[n])
+        else:
+            keyValue = "'" + keyValues[n] + "'"
+        rtnStr = rtnStr + keyColumns[n] + ' = ' +keyValue + "'"
+        n += 1
+    print(rtnStr)
+    return rtnStr[:-1]

@@ -1,4 +1,4 @@
-import re
+import re, configparser
 
 def fix_apostrophe(value):
     if "'" in value:
@@ -14,70 +14,84 @@ def createTable(db, tableName, index, *cols):
     stmt = "create table " + tableName + " (%s)" % ",".join(cols)
     stmt = stmt[:-1] + ',' + index+')'
     # for debugging the next 3 lines write the stmt to a text file
+
     with open("createTable.txt","w") as txtFile:
         txtFile.write(stmt)
         txtFile.close()
     # now execute the stmt
     db.query(stmt)
     db.commit()
+    print('added', tableName)
 
 
 def dataAdder(db,caller, table, keyVal, **other):
-    '''
-    pKeyList = list(pKey.keys())
-    pKeyValues = list(pKey.values())
-
-    n = 0
-    pKeyStr =''
-    while n < len(pKey):
-        if n > 0:
-            pKeyStr = pKeyStr + ', '
-        pKeyStr = pKeyStr +pKeyList[n] +' = ' + valType(pKeyValues[n])
-        print('~39', pKeyStr)
-        n += 1
-    #pKeyStr = pKeyStr + ')'
-    '''
-
+    #print('~26 da_utils keyVal =', keyVal,'Key Length', len(keyVal))
+    #print('~26 da_utils other =',other)
     otherKeyList = list(other.keys())
-    print('da_utils ~40 otherValueList = ',otherKeyList)
     otherValueList = list(other.values())
-    print('da_utils ~42 otherValueList = ',otherValueList)
     insertList = " (" + str(otherKeyList)[1:-1].replace("'","") + ") VALUES ("+ str(otherValueList)[1:-1] + ")"
-    print('da_utils ~44 insertList = ',insertList)
     n = 0
     updateList = ''
     while n < len(otherKeyList):
+        # wrap any year (4 numerics) in a string for SQL Update below
         unknown = str((otherValueList[n]))
         p = re.compile('\d{4')
         m = p.match(unknown)
-        print('da_utils ~51 p=',m)
         if m:
             unknown = m.group()
         else:
             unknown = "'" + unknown + "'"
-        print('da_utils ~46 unkown =', unknown)
-        updateList = updateList + otherKeyList[n] + ' = ' + unknown +", "
-        n+= 1
+
+
+        updateList = updateList + otherKeyList[n] + ' = ' + unknown + ", "
+        n += 1
     updateList = updateList[:-2]
-    print('da_utils ~55 updateList =', updateList)
-    stmt = "SELECT * from " + table +' where ' + keyVal
-    c = db.cursor()
-    c.execute(stmt)
-    itemString = str(c.fetchone())
+    if len(keyVal) > 0:
+        # is there a row corresponding to the keval in the database
+        stmt = "SELECT * from " + table +' where ' + keyVal
+        c = db.cursor()
+        c.execute(stmt)
+        itemString = str(c.fetchone())
+    else:
+        itemString = 'NONE'
     if itemString.upper() == 'NONE':
+        # there is no row in the database with that primary key so INSERT
         stmt = 'INSERT INTO ' + table + insertList
-        print('da_utils ~59 da_utils',stmt)
+        stmtCopy = stmt
+        #print('da_utils Insert stmt =', stmt)
         try:
             db.query(stmt)
             db.commit()
         except Exception as e:
-            print('da_utils  ~62',e)
-        pass
+            print('Caller', caller,'Insert Exception:', e)
+            print('Stmt',stmtCopy)
+            pass
+        except TypeError as e:
+            print('Caller', caller,'OperationalError:', e)
+            print('Stmt',stmtCopy)
+            pass
+        '''
+        except ErrorCode as e:
+            print('Caller', caller,'OperationalError:', e)
+            pass
+        '''
+
     else:
+        # there is a row in the database with that primary key so UPDATE
         stmt = 'UPDATE ' + table + '\nSET '+ updateList +'\n WHERE ' + keyVal
-        print('~66 da_utils',stmt)
-        db.query(stmt)
-        db.commit()
+        # print('~66 da_utils stmt =',stmt)
+        stmtCopy = stmt
+        try:
+            db.query(stmt)
+            db.commit()
+        except Exception as e:
+            print('Caller', caller,'Update Exception:', e)
+            print('Stmt',stmtCopy)
+            pass
+        except TypeError as e:
+            print('Caller', caller,'Update TypeError:', e)
+            print('Stmt',stmtCopy)
+            pass
 
 def makeSrch(keyColumns, keyValues):
     n = 0
@@ -91,5 +105,7 @@ def makeSrch(keyColumns, keyValues):
             keyValue = "'" + keyValues[n] + "'"
         rtnStr = rtnStr + keyColumns[n] + ' = ' +keyValue + "'"
         n += 1
-    print(rtnStr)
     return rtnStr[:-1]
+
+
+

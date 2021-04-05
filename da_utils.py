@@ -108,4 +108,42 @@ def makeSrch(keyColumns, keyValues):
     return rtnStr[:-1]
 
 
+def makeDataDict(database, table, db, dataTuple):
+    print('makeDataDict ~112, database =', database)
+    print('makeDataDict ~113, table =', table)
+    print('makeDataDict ~114, db =', db)
+    print('makeDataDict ~115, dataTuple =', dataTuple)
+    stmt = "SELECT Column_Name FROM \
+    INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + database + \
+    "'and TABLE_NAME = '" + table + "';"
+    print('makeDataDict ~118, stmt =', stmt)
+    stmtCopy = stmt
+    c = db.cursor()
+    #try:
+    c.execute(stmt)
+    '''
+    except Exception as e:
+        print('makeDataDict Insert Exception:', e)
+        print('Stmt', stmtCopy)
+        pass
+    except TypeError as e:
+        print('makeDataDict OperationalError:', e)
+        print('Stmt', stmtCopy)
+        pass
+    '''
+    hdrTuple = c.fetchall()
+    rowStr = ''
+    n= 0
+    dataDict = {}
+    for row in hdrTuple:
+        rowStr = str(row)
+        rowStr = rowStr.replace('(','',100)
+        rowStr = rowStr.replace(')','',100)
+        rowStr = rowStr.replace(',','',100)
+        rowStr = rowStr.replace("'",'',100)
+        print('makeDataDict ~ 136', rowStr)
+        dataDict[rowStr] = dataTuple[n]
+        n += 1
+    return dataDict
+
 

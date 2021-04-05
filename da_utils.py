@@ -1,4 +1,4 @@
-import re, configparser
+import re
 
 def fix_apostrophe(value):
     if "'" in value:
@@ -65,11 +65,11 @@ def dataAdder(db,caller, table, keyVal, **other):
         except Exception as e:
             print('Caller', caller,'Insert Exception:', e)
             print('Stmt',stmtCopy)
-            pass
+
         except TypeError as e:
             print('Caller', caller,'OperationalError:', e)
             print('Stmt',stmtCopy)
-            pass
+
         '''
         except ErrorCode as e:
             print('Caller', caller,'OperationalError:', e)
@@ -87,11 +87,12 @@ def dataAdder(db,caller, table, keyVal, **other):
         except Exception as e:
             print('Caller', caller,'Update Exception:', e)
             print('Stmt',stmtCopy)
-            pass
+
         except TypeError as e:
             print('Caller', caller,'Update TypeError:', e)
             print('Stmt',stmtCopy)
-            pass
+
+
 
 def makeSrch(keyColumns, keyValues):
     n = 0
@@ -109,41 +110,28 @@ def makeSrch(keyColumns, keyValues):
 
 
 def makeDataDict(database, table, db, dataTuple):
-    print('makeDataDict ~112, database =', database)
-    print('makeDataDict ~113, table =', table)
-    print('makeDataDict ~114, db =', db)
-    print('makeDataDict ~115, dataTuple =', dataTuple)
     stmt = "SELECT Column_Name FROM \
     INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + database + \
     "'and TABLE_NAME = '" + table + "';"
-    print('makeDataDict ~118, stmt =', stmt)
     stmtCopy = stmt
     c = db.cursor()
-    #try:
     c.execute(stmt)
-    '''
-    except Exception as e:
-        print('makeDataDict Insert Exception:', e)
-        print('Stmt', stmtCopy)
-        pass
-    except TypeError as e:
-        print('makeDataDict OperationalError:', e)
-        print('Stmt', stmtCopy)
-        pass
-    '''
     hdrTuple = c.fetchall()
     rowStr = ''
     n= 0
     dataDict = {}
     for row in hdrTuple:
-        rowStr = str(row)
-        rowStr = rowStr.replace('(','',100)
-        rowStr = rowStr.replace(')','',100)
-        rowStr = rowStr.replace(',','',100)
-        rowStr = rowStr.replace("'",'',100)
-        print('makeDataDict ~ 136', rowStr)
+        rowStr = stringStripper(row)
         dataDict[rowStr] = dataTuple[n]
         n += 1
     return dataDict
+
+def stringStripper(input):
+    input = str(input)
+    input = input.replace('(','',100)
+    input = input.replace(')','',100)
+    input = input.replace(',','',100)
+    input = input.replace("'",'',100)
+    return input
 
 

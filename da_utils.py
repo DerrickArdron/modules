@@ -112,7 +112,7 @@ def makeSrch(keyColumns, keyValues):
 def makeDataDict(database, table, db, dataTuple):
     stmt = "SELECT Column_Name FROM \
     INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + database + \
-    "'and TABLE_NAME = '" + table + "';"
+    "'and TABLE_NAME = '" + table + "' order by ORDINAL_POSITION;"
     stmtCopy = stmt
     c = db.cursor()
     c.execute(stmt)

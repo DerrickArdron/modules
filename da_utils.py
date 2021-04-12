@@ -21,7 +21,7 @@ def createTable(db, tableName, index, *cols):
     # now execute the stmt
     db.query(stmt)
     db.commit()
-    print('added', tableName)
+    print('Created', tableName)
 
 
 def dataAdder(db,caller, table, keyVal, **other):
